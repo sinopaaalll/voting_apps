@@ -88,7 +88,6 @@ class AdminKandidatController extends Controller
             ],
             'name' => ['required', 'string', 'max:100'],
             'photo' => [$kandidat ? 'nullable' : 'required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
-            'visi_misi' => ['required', 'string', 'max:5000'],
         ], [
             'nomor_urut.required' => 'Nomor urut wajib diisi.',
             'nomor_urut.integer' => 'Nomor urut harus berupa angka.',
@@ -98,8 +97,6 @@ class AdminKandidatController extends Controller
             'photo.image' => 'File harus berupa gambar.',
             'photo.mimes' => 'Foto harus berformat JPG, PNG, atau WebP.',
             'photo.max' => 'Ukuran foto maksimal 2 MB.',
-            'visi_misi.required' => 'Visi dan misi wajib diisi.',
-            'visi_misi.max' => 'Visi dan misi maksimal 5.000 karakter.',
         ]);
     }
 }

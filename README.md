@@ -1,6 +1,6 @@
 # SuaraKita
 
-Aplikasi voting internal sederhana berbasis Laravel 12. Employee masuk menggunakan NIK dan hanya dapat memilih satu kali. Admin mengelola employee, kandidat, dan melihat hasil agregat.
+Aplikasi voting internal sederhana berbasis Laravel 12. Employee masuk menggunakan NIK dan hanya dapat memilih satu kali. Admin mengelola employee, kandidat, melihat detail pemilih per kandidat, dan mengekspor hasil ke Excel.
 
 Antarmuka pemilih dirancang mobile-first untuk proses voting melalui ponsel.
 
@@ -25,7 +25,7 @@ Data contoh hasil seeding:
 Kredensial admin pengembangan awal:
 
 - Username: `admin`
-- Password: `admin123`
+- Password: `P@ssw0rd`
 
 Ganti password sebelum aplikasi digunakan. Buat hash baru melalui Laravel Tinker dengan `Hash::make('password-baru')`, kemudian simpan hasilnya pada `ADMIN_PASSWORD_HASH` di `.env` menggunakan tanda kutip tunggal.
 

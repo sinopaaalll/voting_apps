@@ -62,7 +62,7 @@ class VotingFlowTest extends TestCase
     {
         return Kandidat::create([
             'nomor_urut' => $number, 'name' => $name,
-            'photo' => "kandidat/{$number}.jpg", 'visi_misi' => 'Membangun perusahaan yang lebih baik.',
+            'photo' => "kandidat/{$number}.jpg",
         ]);
     }
 }

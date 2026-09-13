@@ -13,7 +13,6 @@ class Kandidat extends Model
         'nomor_urut',
         'name',
         'photo',
-        'visi_misi',
     ];
 
     public function votes(): HasMany

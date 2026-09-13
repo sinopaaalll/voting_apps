@@ -25,6 +25,8 @@ Route::post('/admin/login', [AdminAuthController::class, 'store'])->name('admin.
 Route::prefix('admin')->name('admin.')->middleware('admin.session')->group(function (): void {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('/hasil', [AdminDashboardController::class, 'results'])->name('results');
+    Route::get('/hasil/export', [AdminDashboardController::class, 'exportResults'])->name('results.export');
+    Route::get('/hasil/{kandidat}', [AdminDashboardController::class, 'showResult'])->whereNumber('kandidat')->name('results.show');
     Route::get('/employees/template-import', [AdminEmployeeController::class, 'template'])->name('employees.template');
     Route::post('/employees/import', [AdminEmployeeController::class, 'import'])->name('employees.import');
     Route::delete('/employees/bulk', [AdminEmployeeController::class, 'bulkDestroy'])->name('employees.bulk-destroy');

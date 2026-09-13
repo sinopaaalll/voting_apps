@@ -13,7 +13,6 @@ return new class extends Migration
             $table->unsignedSmallInteger('nomor_urut')->unique();
             $table->string('name', 100);
             $table->string('photo');
-            $table->text('visi_misi');
             $table->timestamps();
         });
     }

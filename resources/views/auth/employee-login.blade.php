@@ -24,7 +24,7 @@
             @csrf
             <label class="field">
                 <span>NIK</span>
-                <input name="nik" value="{{ old('nik') }}" maxlength="30" autocomplete="username" inputmode="text" autocapitalize="characters" placeholder="Contoh: EMP-001" autofocus required>
+                <input name="nik" value="{{ old('nik') }}" maxlength="30" autocomplete="username" inputmode="text" autocapitalize="characters" placeholder="xxxxxxx" autofocus required>
             </label>
             <button class="btn btn-primary btn-block mobile-primary-action" type="submit">Lanjutkan <span aria-hidden="true">→</span></button>
         </form>

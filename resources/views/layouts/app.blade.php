@@ -20,7 +20,7 @@
                     <a class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">Ringkasan</a>
                     <a class="{{ request()->routeIs('admin.employees.*') ? 'active' : '' }}" href="{{ route('admin.employees.index') }}">Employee</a>
                     <a class="{{ request()->routeIs('admin.kandidat.*') ? 'active' : '' }}" href="{{ route('admin.kandidat.index') }}">Kandidat</a>
-                    <a class="{{ request()->routeIs('admin.results') ? 'active' : '' }}" href="{{ route('admin.results') }}">Hasil</a>
+                    <a class="{{ request()->routeIs('admin.results*') ? 'active' : '' }}" href="{{ route('admin.results') }}">Hasil</a>
                     <form method="POST" action="{{ route('admin.logout') }}">
                         @csrf
                         <button class="nav-logout" type="submit">Keluar</button>
@@ -53,7 +53,6 @@
             @yield('content')
         </main>
 
-        <footer class="footer">Pemilihan internal yang ringkas, transparan, dan mudah digunakan.</footer>
     </div>
 </body>
 </html>

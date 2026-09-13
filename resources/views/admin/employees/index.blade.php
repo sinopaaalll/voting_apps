@@ -29,25 +29,26 @@
     </form>
 </dialog>
 
-<form class="filter-bar" method="GET" action="{{ route('admin.employees.index') }}">
-    <input name="q" value="{{ request('q') }}" placeholder="Cari NIK atau nama..." aria-label="Cari NIK atau nama">
+<form class="filter-bar" method="GET" action="{{ route('admin.employees.index') }}" data-employee-filter-form>
+    <input name="q" value="{{ request('q') }}" placeholder="Cari NIK atau nama..." aria-label="Cari NIK atau nama" autocomplete="off" data-employee-search>
     <select class="js-department-select" name="department" aria-label="Filter department" data-placeholder="Cari department...">
         <option value="">Semua department</option>
         @foreach ($departments as $department)
             <option value="{{ $department }}" @selected(request('department') === $department)>{{ $department }}</option>
         @endforeach
     </select>
-    <select name="status" aria-label="Filter status">
+    <select class="js-status-filter-select" name="status" aria-label="Filter status" data-employee-status-filter>
         <option value="">Semua status</option>
         @foreach (['tetap' => 'Tetap', 'kontrak' => 'Kontrak', 'magang' => 'Magang'] as $value => $label)
             <option value="{{ $value }}" @selected(request('status') === $value)>{{ $label }}</option>
         @endforeach
     </select>
     <button class="btn btn-dark" type="submit">Terapkan</button>
-    @if (request()->hasAny(['q', 'department', 'status']))<a class="btn btn-ghost" href="{{ route('admin.employees.index') }}">Reset</a>@endif
+    <a class="btn btn-ghost" href="{{ route('admin.employees.index') }}" data-filter-reset @if (! request()->hasAny(['q', 'department', 'status'])) hidden @endif>Reset</a>
 </form>
 
-<form id="bulk-delete-form" method="POST" action="{{ route('admin.employees.bulk-destroy') }}" onsubmit="return confirm('Hapus semua employee yang dipilih? Employee yang sudah voting akan dilewati.')">
+<section class="employee-results" data-employee-results aria-live="polite">
+<form id="bulk-delete-form" method="POST" action="{{ route('admin.employees.bulk-destroy') }}" data-confirm-delete data-confirm-title="Hapus employee yang dipilih?" data-confirm-text="Employee yang sudah voting akan dilewati. Data lain yang dihapus tidak dapat dipulihkan." data-confirm-button="Ya, hapus pilihan">
     @csrf @method('DELETE')
 </form>
 
@@ -76,7 +77,7 @@
                     <td data-label="Voting"><span class="badge {{ $employee->voting_exists ? 'badge-success' : 'badge-warning' }}">{{ $employee->voting_exists ? 'Sudah memilih' : 'Belum memilih' }}</span></td>
                     <td class="actions" data-label="Aksi">
                         <a class="btn btn-small btn-ghost" href="{{ route('admin.employees.edit', $employee) }}">Edit</a>
-                        <form method="POST" action="{{ route('admin.employees.destroy', $employee) }}" onsubmit="return confirm('Hapus employee ini?')">
+                        <form method="POST" action="{{ route('admin.employees.destroy', $employee) }}" data-confirm-delete data-confirm-title="Hapus {{ $employee->name }}?" data-confirm-text="Data employee yang dihapus tidak dapat dipulihkan.">
                             @csrf @method('DELETE')
                             <button class="btn btn-small btn-danger" type="submit" @disabled($employee->voting_exists)>Hapus</button>
                         </form>
@@ -90,4 +91,5 @@
 </div>
 
 <div class="pagination-wrap">{{ $employees->links() }}</div>
+</section>
 @endsection

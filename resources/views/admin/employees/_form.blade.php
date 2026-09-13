@@ -5,7 +5,7 @@
     <label class="field"><span>Jabatan</span><input name="position" value="{{ old('position', $employee->position ?? '') }}" maxlength="100" placeholder="Contoh: HR Specialist" required></label>
     <label class="field field-wide">
         <span>Status karyawan</span>
-        <select name="employment_status" required>
+        <select class="js-employment-status-select" name="employment_status" data-placeholder="Pilih status" required>
             <option value="">Pilih status</option>
             @foreach (['tetap' => 'Tetap', 'kontrak' => 'Kontrak', 'magang' => 'Magang'] as $value => $label)
                 <option value="{{ $value }}" @selected(old('employment_status', $employee->employment_status ?? '') === $value)>{{ $label }}</option>

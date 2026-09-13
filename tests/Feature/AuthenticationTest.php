@@ -15,6 +15,7 @@ class AuthenticationTest extends TestCase
     {
         $this->get('/voting')->assertRedirect(route('employee.login'));
         $this->get('/admin')->assertRedirect(route('admin.login'));
+        $this->get(route('admin.results.export'))->assertRedirect(route('admin.login'));
     }
 
     public function test_employee_can_login_with_registered_nik_but_unknown_nik_is_rejected(): void

@@ -18,7 +18,7 @@
         <div>
             <span class="eyebrow">Bilik suara digital</span>
             <h1>Pilih kandidat Anda</h1>
-            <p>Geser ke bawah untuk melihat kandidat dan pelajari visi-misinya sebelum memilih.</p>
+            <p>Geser ke bawah untuk melihat seluruh kandidat sebelum menentukan pilihan.</p>
         </div>
         <div class="voter-chip"><span>{{ mb_strtoupper(mb_substr($employee->name, 0, 1)) }}</span><div><small>Pemilih</small><strong>{{ $employee->name }}</strong><small>{{ $employee->nik }} · {{ $employee->department }}</small></div></div>
     </div>
@@ -32,10 +32,6 @@
                 <div class="vote-body">
                     <small>Kandidat nomor {{ $item->nomor_urut }}</small>
                     <h2>{{ $item->name }}</h2>
-                    <details class="vision-details">
-                        <summary>Lihat visi & misi <span aria-hidden="true">⌄</span></summary>
-                        <p>{{ $item->visi_misi }}</p>
-                    </details>
                     <button class="btn btn-primary btn-block mobile-primary-action" type="button" onclick="document.getElementById('confirm-{{ $item->id }}').showModal()">Pilih kandidat ini</button>
                 </div>
             </article>

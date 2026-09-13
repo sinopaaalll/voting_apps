@@ -9,6 +9,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Tests\TestCase;
@@ -37,12 +39,12 @@ class AdminManagementTest extends TestCase
         Storage::fake('public');
 
         $this->withSession(['admin_authenticated' => true])->post(route('admin.kandidat.store'), [
-            'nomor_urut' => 1, 'name' => 'Kandidat Satu', 'visi_misi' => 'Visi kandidat.',
+            'nomor_urut' => 1, 'name' => 'Kandidat Satu',
             'photo' => UploadedFile::fake()->create('bukan-gambar.txt', 10, 'text/plain'),
         ])->assertSessionHasErrors('photo');
 
         $response = $this->withSession(['admin_authenticated' => true])->post(route('admin.kandidat.store'), [
-            'nomor_urut' => 1, 'name' => 'Kandidat Satu', 'visi_misi' => 'Visi kandidat.',
+            'nomor_urut' => 1, 'name' => 'Kandidat Satu',
             'photo' => UploadedFile::fake()->image('foto.jpg', 400, 500),
         ]);
 
@@ -53,7 +55,7 @@ class AdminManagementTest extends TestCase
     public function test_records_with_votes_cannot_be_deleted_or_candidate_edited(): void
     {
         $employee = Employee::create(['nik' => 'EMP-001', 'name' => 'Andi', 'department' => 'IT', 'employment_status' => 'tetap', 'position' => 'Developer']);
-        $candidate = Kandidat::create(['nomor_urut' => 1, 'name' => 'Kandidat', 'photo' => 'kandidat/1.jpg', 'visi_misi' => 'Visi']);
+        $candidate = Kandidat::create(['nomor_urut' => 1, 'name' => 'Kandidat', 'photo' => 'kandidat/1.jpg']);
         Voting::create(['employee_id' => $employee->id, 'kandidat_id' => $candidate->id]);
 
         $this->withSession(['admin_authenticated' => true])->delete(route('admin.employees.destroy', $employee))
@@ -70,7 +72,7 @@ class AdminManagementTest extends TestCase
     public function test_results_show_aggregate_counts_without_employee_identity(): void
     {
         $employee = Employee::create(['nik' => 'SECRET-001', 'name' => 'Nama Rahasia', 'department' => 'IT', 'employment_status' => 'tetap', 'position' => 'Developer']);
-        $candidate = Kandidat::create(['nomor_urut' => 1, 'name' => 'Kandidat', 'photo' => 'kandidat/1.jpg', 'visi_misi' => 'Visi']);
+        $candidate = Kandidat::create(['nomor_urut' => 1, 'name' => 'Kandidat', 'photo' => 'kandidat/1.jpg']);
         Voting::create(['employee_id' => $employee->id, 'kandidat_id' => $candidate->id]);
 
         $this->withSession(['admin_authenticated' => true])->get(route('admin.results'))
@@ -79,6 +81,41 @@ class AdminManagementTest extends TestCase
             ->assertSee('Kandidat')
             ->assertDontSee('SECRET-001')
             ->assertDontSee('Nama Rahasia');
+
+        $this->withSession(['admin_authenticated' => true])->get(route('admin.results.show', $candidate))
+            ->assertOk()
+            ->assertSee('SECRET-001')
+            ->assertSee('Nama Rahasia')
+            ->assertSee('Developer');
+    }
+
+    public function test_admin_can_export_summary_and_voter_details_to_excel(): void
+    {
+        $employee = Employee::create(['nik' => '0012345', 'name' => 'Budi', 'department' => 'Quality', 'employment_status' => 'tetap', 'position' => 'Inspector']);
+        $candidate = Kandidat::create(['nomor_urut' => 2, 'name' => 'Kandidat Dua', 'photo' => 'kandidat/2.jpg']);
+        Voting::create(['employee_id' => $employee->id, 'kandidat_id' => $candidate->id]);
+
+        $response = $this->withSession(['admin_authenticated' => true])->get(route('admin.results.export'));
+        $response->assertOk()->assertDownload('hasil-voting.xlsx');
+
+        $temporaryPath = tempnam(sys_get_temp_dir(), 'hasil-voting-');
+        file_put_contents($temporaryPath, $response->streamedContent());
+        $workbook = IOFactory::load($temporaryPath);
+
+        try {
+            $this->assertSame(['Ringkasan', 'Detail Pemilih'], $workbook->getSheetNames());
+            $this->assertSame(1, $workbook->getSheetByName('Ringkasan')->getCell('B2')->getValue());
+            $this->assertSame(1, $workbook->getSheetByName('Ringkasan')->getCell('D2')->getValue());
+            $this->assertSame('Kandidat Dua', $workbook->getSheetByName('Ringkasan')->getCell('B6')->getValue());
+            $this->assertSame('=IF($D$2=0,0,C6/$D$2)', $workbook->getSheetByName('Ringkasan')->getCell('D6')->getValue());
+            $this->assertSame('0012345', $workbook->getSheetByName('Detail Pemilih')->getCell('B5')->getValue());
+            $this->assertSame(DataType::TYPE_STRING, $workbook->getSheetByName('Detail Pemilih')->getCell('B5')->getDataType());
+            $this->assertSame('Budi', $workbook->getSheetByName('Detail Pemilih')->getCell('C5')->getValue());
+            $this->assertSame('Kandidat Dua', $workbook->getSheetByName('Detail Pemilih')->getCell('H5')->getValue());
+        } finally {
+            $workbook->disconnectWorksheets();
+            unlink($temporaryPath);
+        }
     }
 
     public function test_admin_can_import_excel_and_existing_nik_is_updated(): void
@@ -144,7 +181,7 @@ class AdminManagementTest extends TestCase
         $first = Employee::create(['nik' => 'EMP-101', 'name' => 'Satu', 'department' => 'IT', 'employment_status' => 'tetap', 'position' => 'Developer']);
         $second = Employee::create(['nik' => 'EMP-102', 'name' => 'Dua', 'department' => 'IT', 'employment_status' => 'tetap', 'position' => 'Developer']);
         $protected = Employee::create(['nik' => 'EMP-103', 'name' => 'Tiga', 'department' => 'IT', 'employment_status' => 'tetap', 'position' => 'Developer']);
-        $candidate = Kandidat::create(['nomor_urut' => 1, 'name' => 'Kandidat', 'photo' => 'kandidat/1.jpg', 'visi_misi' => 'Visi']);
+        $candidate = Kandidat::create(['nomor_urut' => 1, 'name' => 'Kandidat', 'photo' => 'kandidat/1.jpg']);
         Voting::create(['employee_id' => $protected->id, 'kandidat_id' => $candidate->id]);
 
         $this->withSession(['admin_authenticated' => true])
