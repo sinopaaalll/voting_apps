@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Kandidat;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -65,15 +66,19 @@ class AdminKandidatController extends Controller
 
     public function destroy(Kandidat $kandidat): RedirectResponse
     {
-        if ($kandidat->votes()->exists()) {
-            return back()->withErrors(['delete' => 'Kandidat yang sudah memperoleh suara tidak dapat dihapus.']);
-        }
-
         $photo = $kandidat->photo;
-        $kandidat->delete();
+        $deletedVotes = $kandidat->votes()->count();
+
+        DB::transaction(function () use ($kandidat): void {
+            $kandidat->delete();
+        });
+
         Storage::disk('public')->delete($photo);
 
-        return back()->with('success', 'Kandidat berhasil dihapus.');
+        return back()->with(
+            'success',
+            "Kandidat berhasil dihapus bersama {$deletedVotes} suara terkait.",
+        );
     }
 
     private function validatedData(Request $request, ?Kandidat $kandidat = null): array

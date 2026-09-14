@@ -52,21 +52,27 @@ class AdminManagementTest extends TestCase
         Storage::disk('public')->assertExists(Kandidat::firstOrFail()->photo);
     }
 
-    public function test_records_with_votes_cannot_be_deleted_or_candidate_edited(): void
+    public function test_candidate_with_votes_can_be_deleted_with_its_votes_but_cannot_be_edited(): void
     {
+        Storage::fake('public');
+        Storage::disk('public')->put('kandidat/1.jpg', 'photo-content');
+
         $employee = Employee::create(['nik' => 'EMP-001', 'name' => 'Andi', 'department' => 'IT', 'employment_status' => 'tetap', 'position' => 'Developer']);
         $candidate = Kandidat::create(['nomor_urut' => 1, 'name' => 'Kandidat', 'photo' => 'kandidat/1.jpg']);
         Voting::create(['employee_id' => $employee->id, 'kandidat_id' => $candidate->id]);
 
         $this->withSession(['admin_authenticated' => true])->delete(route('admin.employees.destroy', $employee))
             ->assertSessionHasErrors('delete');
-        $this->withSession(['admin_authenticated' => true])->delete(route('admin.kandidat.destroy', $candidate))
-            ->assertSessionHasErrors('delete');
         $this->withSession(['admin_authenticated' => true])->get(route('admin.kandidat.edit', $candidate))
             ->assertRedirect(route('admin.kandidat.index'));
+        $this->withSession(['admin_authenticated' => true])->delete(route('admin.kandidat.destroy', $candidate))
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Kandidat berhasil dihapus bersama 1 suara terkait.');
 
         $this->assertDatabaseHas('employee', ['id' => $employee->id]);
-        $this->assertDatabaseHas('kandidat', ['id' => $candidate->id]);
+        $this->assertDatabaseMissing('kandidat', ['id' => $candidate->id]);
+        $this->assertDatabaseMissing('voting', ['kandidat_id' => $candidate->id]);
+        Storage::disk('public')->assertMissing('kandidat/1.jpg');
     }
 
     public function test_results_show_aggregate_counts_without_employee_identity(): void

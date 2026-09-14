@@ -15,7 +15,7 @@
             <div class="candidate-body"><h2>{{ $item->name }}</h2><span class="badge {{ $item->votes_count ? 'badge-success' : 'badge-neutral' }}">{{ $item->votes_count }} suara</span></div>
             <div class="candidate-actions">
                 @if ($item->votes_count === 0)<a class="btn btn-small btn-ghost" href="{{ route('admin.kandidat.edit', $item) }}">Edit</a>@endif
-                <form method="POST" action="{{ route('admin.kandidat.destroy', $item) }}" data-confirm-delete data-confirm-title="Hapus {{ $item->name }}?" data-confirm-text="Data kandidat yang dihapus tidak dapat dipulihkan.">@csrf @method('DELETE')<button class="btn btn-small btn-danger" type="submit" @disabled($item->votes_count > 0)>Hapus</button></form>
+                <form method="POST" action="{{ route('admin.kandidat.destroy', $item) }}" data-confirm-delete data-confirm-title="Hapus {{ $item->name }}?" data-confirm-text="Kandidat dan {{ $item->votes_count }} suara terkait akan dihapus permanen.">@csrf @method('DELETE')<button class="btn btn-small btn-danger" type="submit">Hapus</button></form>
             </div>
         </article>
     @empty
