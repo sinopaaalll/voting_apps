@@ -54,6 +54,18 @@ class AdminManagementTest extends TestCase
             ->assertDontSee($voted->name);
     }
 
+    public function test_dashboard_summary_cards_link_to_their_filtered_data(): void
+    {
+        $response = $this->withSession(['admin_authenticated' => true])
+            ->get(route('admin.dashboard'));
+
+        $response->assertOk()
+            ->assertSee('href="'.route('admin.employees.index').'"', false)
+            ->assertSee('href="'.route('admin.employees.index', ['voting_status' => 'voted']).'"', false)
+            ->assertSee('href="'.route('admin.employees.index', ['voting_status' => 'not_voted']).'"', false)
+            ->assertSee('href="'.route('admin.kandidat.index').'"', false);
+    }
+
     public function test_candidate_photo_validation_and_storage_work(): void
     {
         Storage::fake('public');

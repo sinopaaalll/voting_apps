@@ -13,10 +13,10 @@
 </div>
 
 <section class="stat-grid">
-    <article class="stat-card accent-blue"><span>Total employee</span><strong>{{ number_format($totalEmployee) }}</strong><small>Pemilih terdaftar</small></article>
-    <article class="stat-card accent-green"><span>Sudah memilih</span><strong>{{ number_format($totalVotes) }}</strong><small>{{ $participation }}% partisipasi</small></article>
-    <article class="stat-card accent-orange"><span>Belum memilih</span><strong>{{ number_format($notVoted) }}</strong><small>Employee tersisa</small></article>
-    <article class="stat-card accent-purple"><span>Kandidat</span><strong>{{ number_format($kandidat->count()) }}</strong><small>Peserta pemilihan</small></article>
+    <a class="stat-card stat-card-link accent-blue" href="{{ route('admin.employees.index') }}" aria-label="Lihat semua employee"><span>Total employee</span><strong>{{ number_format($totalEmployee) }}</strong><small>Pemilih terdaftar</small></a>
+    <a class="stat-card stat-card-link accent-green" href="{{ route('admin.employees.index', ['voting_status' => 'voted']) }}" aria-label="Lihat employee yang sudah memilih"><span>Sudah memilih</span><strong>{{ number_format($totalVotes) }}</strong><small>{{ $participation }}% partisipasi</small></a>
+    <a class="stat-card stat-card-link accent-orange" href="{{ route('admin.employees.index', ['voting_status' => 'not_voted']) }}" aria-label="Lihat employee yang belum memilih"><span>Belum memilih</span><strong>{{ number_format($notVoted) }}</strong><small>Employee tersisa</small></a>
+    <a class="stat-card stat-card-link accent-purple" href="{{ route('admin.kandidat.index') }}" aria-label="Lihat semua kandidat"><span>Kandidat</span><strong>{{ number_format($kandidat->count()) }}</strong><small>Peserta pemilihan</small></a>
 </section>
 
 <section class="panel">
