@@ -7,7 +7,7 @@
     <div><span class="eyebrow">Hasil pemilihan</span><h1>Perolehan suara</h1><p>Klik kartu kandidat untuk melihat employee yang memberikan suara.</p></div>
     <div class="header-actions">
         <span class="badge badge-success">{{ $totalVotes }} dari {{ $totalEmployee }} suara masuk</span>
-        <a class="btn btn-primary" href="{{ route('admin.results.export') }}">Export Excel</a>
+        <a class="btn btn-primary" href="{{ route('admin.results.export') }}">Export Semua Kandidat</a>
     </div>
 </div>
 <section class="results-grid">

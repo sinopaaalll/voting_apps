@@ -26,6 +26,8 @@ Route::prefix('admin')->name('admin.')->middleware('admin.session')->group(funct
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('/hasil', [AdminDashboardController::class, 'results'])->name('results');
     Route::get('/hasil/export', [AdminDashboardController::class, 'exportResults'])->name('results.export');
+    Route::get('/hasil/{kandidat}/export', [AdminDashboardController::class, 'exportCandidateResults'])->whereNumber('kandidat')->name('results.candidate-export');
+    Route::patch('/hasil/voting/{voting}/kandidat', [AdminDashboardController::class, 'moveVote'])->whereNumber('voting')->name('results.vote.move');
     Route::get('/hasil/{kandidat}', [AdminDashboardController::class, 'showResult'])->whereNumber('kandidat')->name('results.show');
     Route::get('/employees/template-import', [AdminEmployeeController::class, 'template'])->name('employees.template');
     Route::post('/employees/import', [AdminEmployeeController::class, 'import'])->name('employees.import');

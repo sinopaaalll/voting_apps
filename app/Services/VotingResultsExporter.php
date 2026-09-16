@@ -7,6 +7,7 @@ use App\Models\Kandidat;
 use App\Models\Voting;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -32,6 +33,23 @@ class VotingResultsExporter
         ]);
     }
 
+    public function downloadCandidate(Kandidat $candidate): StreamedResponse
+    {
+        $spreadsheet = $this->candidateWorkbook($candidate);
+        $candidateName = Str::slug($candidate->name) ?: "kandidat-{$candidate->id}";
+        $filename = sprintf('hasil-kandidat-%02d-%s.xlsx', $candidate->nomor_urut, $candidateName);
+
+        return response()->streamDownload(function () use ($spreadsheet): void {
+            try {
+                (new Xlsx($spreadsheet))->save('php://output');
+            } finally {
+                $spreadsheet->disconnectWorksheets();
+            }
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
     private function workbook(): Spreadsheet
     {
         $spreadsheet = new Spreadsheet;
@@ -43,6 +61,78 @@ class VotingResultsExporter
         $this->summarySheet($spreadsheet);
         $this->voterSheet($spreadsheet);
         $spreadsheet->setActiveSheetIndex(0);
+
+        return $spreadsheet;
+    }
+
+    private function candidateWorkbook(Kandidat $candidate): Spreadsheet
+    {
+        $spreadsheet = new Spreadsheet;
+        $spreadsheet->getProperties()
+            ->setCreator(config('app.name'))
+            ->setTitle("Hasil Voting {$candidate->name}")
+            ->setSubject("Daftar employee yang memilih {$candidate->name}");
+
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Pemilih Kandidat');
+        $sheet->setShowGridlines(false);
+        $sheet->mergeCells('A1:G1');
+        $sheet->setCellValue('A1', 'HASIL VOTING PER KANDIDAT');
+        $sheet->fromArray([
+            ['Nomor Urut', $candidate->nomor_urut, 'Nama Kandidat', $candidate->name],
+            ['Total Suara', $candidate->votes()->count(), '', ''],
+        ], null, 'A2');
+        $sheet->fromArray([
+            'No', 'NIK', 'Nama Employee', 'Department', 'Status', 'Jabatan', 'Waktu Memilih',
+        ], null, 'A5');
+
+        $votes = DB::table('voting')
+            ->join('employee', 'employee.id', '=', 'voting.employee_id')
+            ->where('voting.kandidat_id', $candidate->id)
+            ->select([
+                'employee.nik',
+                'employee.name as employee_name',
+                'employee.department',
+                'employee.employment_status',
+                'employee.position',
+                'voting.created_at as voted_at',
+            ])
+            ->orderBy('employee.name')
+            ->cursor();
+
+        $row = 6;
+        foreach ($votes as $index => $vote) {
+            $sheet->setCellValue("A{$row}", $index + 1);
+            $sheet->setCellValueExplicit("B{$row}", (string) $vote->nik, DataType::TYPE_STRING);
+            $sheet->setCellValue("C{$row}", $vote->employee_name);
+            $sheet->setCellValue("D{$row}", $vote->department);
+            $sheet->setCellValue("E{$row}", ucfirst($vote->employment_status));
+            $sheet->setCellValue("F{$row}", $vote->position);
+            $sheet->setCellValue("G{$row}", Date::PHPToExcel(Carbon::parse($vote->voted_at)));
+            $row++;
+        }
+
+        if ($row === 6) {
+            $sheet->mergeCells('A6:G6');
+            $sheet->setCellValue('A6', 'Belum ada employee yang memilih kandidat ini.');
+        } else {
+            $sheet->getStyle('G6:G'.($row - 1))->getNumberFormat()->setFormatCode('yyyy-mm-dd hh:mm');
+        }
+
+        $lastRow = max(5, $row - 1);
+        $this->styleTitle($sheet, 'A1:G1');
+        $this->styleHeader($sheet, 'A5:G5');
+        $sheet->getStyle('A2:D3')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F4F7FB');
+        $sheet->getStyle('A2:D3')->getFont()->setBold(true);
+
+        $widths = [8, 18, 28, 25, 13, 25, 21];
+        foreach (range('A', 'G') as $index => $column) {
+            $sheet->getColumnDimension($column)->setWidth($widths[$index]);
+        }
+
+        $sheet->getRowDimension(1)->setRowHeight(30);
+        $sheet->freezePane('A6');
+        $sheet->setAutoFilter("A5:G{$lastRow}");
 
         return $spreadsheet;
     }

@@ -33,23 +33,13 @@ class AdminKandidatController extends Controller
         return redirect()->route('admin.kandidat.index')->with('success', 'Kandidat berhasil ditambahkan.');
     }
 
-    public function edit(Kandidat $kandidat): View|RedirectResponse
+    public function edit(Kandidat $kandidat): View
     {
-        if ($kandidat->votes()->exists()) {
-            return redirect()->route('admin.kandidat.index')
-                ->withErrors(['edit' => 'Kandidat yang sudah memperoleh suara tidak dapat diedit.']);
-        }
-
         return view('admin.kandidat.edit', compact('kandidat'));
     }
 
     public function update(Request $request, Kandidat $kandidat): RedirectResponse
     {
-        if ($kandidat->votes()->exists()) {
-            return redirect()->route('admin.kandidat.index')
-                ->withErrors(['edit' => 'Kandidat yang sudah memperoleh suara tidak dapat diedit.']);
-        }
-
         $data = $this->validatedData($request, $kandidat);
 
         if ($request->hasFile('photo')) {

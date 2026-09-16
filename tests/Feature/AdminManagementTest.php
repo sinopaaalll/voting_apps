@@ -34,6 +34,26 @@ class AdminManagementTest extends TestCase
             ->assertSessionHasErrors('nik');
     }
 
+    public function test_admin_can_filter_employees_by_voting_status(): void
+    {
+        $voted = Employee::create(['nik' => 'EMP-VOTED', 'name' => 'Employee Sudah Memilih', 'department' => 'IT', 'employment_status' => 'tetap', 'position' => 'Developer']);
+        $notVoted = Employee::create(['nik' => 'EMP-NOT-VOTED', 'name' => 'Employee Belum Memilih', 'department' => 'IT', 'employment_status' => 'kontrak', 'position' => 'Tester']);
+        $candidate = Kandidat::create(['nomor_urut' => 1, 'name' => 'Kandidat', 'photo' => 'kandidat/1.jpg']);
+        Voting::create(['employee_id' => $voted->id, 'kandidat_id' => $candidate->id]);
+
+        $this->withSession(['admin_authenticated' => true])
+            ->get(route('admin.employees.index', ['voting_status' => 'voted']))
+            ->assertOk()
+            ->assertSee($voted->name)
+            ->assertDontSee($notVoted->name);
+
+        $this->withSession(['admin_authenticated' => true])
+            ->get(route('admin.employees.index', ['voting_status' => 'not_voted']))
+            ->assertOk()
+            ->assertSee($notVoted->name)
+            ->assertDontSee($voted->name);
+    }
+
     public function test_candidate_photo_validation_and_storage_work(): void
     {
         Storage::fake('public');
@@ -52,7 +72,7 @@ class AdminManagementTest extends TestCase
         Storage::disk('public')->assertExists(Kandidat::firstOrFail()->photo);
     }
 
-    public function test_candidate_with_votes_can_be_deleted_with_its_votes_but_cannot_be_edited(): void
+    public function test_candidate_with_votes_can_be_edited_and_deleted_with_its_votes(): void
     {
         Storage::fake('public');
         Storage::disk('public')->put('kandidat/1.jpg', 'photo-content');
@@ -64,7 +84,22 @@ class AdminManagementTest extends TestCase
         $this->withSession(['admin_authenticated' => true])->delete(route('admin.employees.destroy', $employee))
             ->assertSessionHasErrors('delete');
         $this->withSession(['admin_authenticated' => true])->get(route('admin.kandidat.edit', $candidate))
-            ->assertRedirect(route('admin.kandidat.index'));
+            ->assertOk();
+        $this->withSession(['admin_authenticated' => true])->put(route('admin.kandidat.update', $candidate), [
+            'nomor_urut' => 2,
+            'name' => 'Kandidat Diperbarui',
+        ])->assertRedirect(route('admin.kandidat.index'));
+
+        $this->assertDatabaseHas('kandidat', [
+            'id' => $candidate->id,
+            'nomor_urut' => 2,
+            'name' => 'Kandidat Diperbarui',
+        ]);
+        $this->assertDatabaseHas('voting', [
+            'employee_id' => $employee->id,
+            'kandidat_id' => $candidate->id,
+        ]);
+
         $this->withSession(['admin_authenticated' => true])->delete(route('admin.kandidat.destroy', $candidate))
             ->assertRedirect()
             ->assertSessionHas('success', 'Kandidat berhasil dihapus bersama 1 suara terkait.');
@@ -95,6 +130,57 @@ class AdminManagementTest extends TestCase
             ->assertSee('Developer');
     }
 
+    public function test_candidate_result_detail_uses_table_and_can_search_by_nik_or_name(): void
+    {
+        $first = Employee::create(['nik' => 'SEARCH-001', 'name' => 'Andi Search', 'department' => 'IT', 'employment_status' => 'tetap', 'position' => 'Developer']);
+        $second = Employee::create(['nik' => 'SEARCH-002', 'name' => 'Budi Filter', 'department' => 'Finance', 'employment_status' => 'kontrak', 'position' => 'Staff']);
+        $candidate = Kandidat::create(['nomor_urut' => 1, 'name' => 'Kandidat', 'photo' => 'kandidat/1.jpg']);
+        Voting::create(['employee_id' => $first->id, 'kandidat_id' => $candidate->id]);
+        Voting::create(['employee_id' => $second->id, 'kandidat_id' => $candidate->id]);
+
+        $this->withSession(['admin_authenticated' => true])
+            ->get(route('admin.results.show', ['kandidat' => $candidate, 'q' => 'SEARCH-001']))
+            ->assertOk()
+            ->assertSee('<table class="employee-table result-voter-table">', false)
+            ->assertSee('2 suara')
+            ->assertSee($first->name)
+            ->assertDontSee($second->name);
+
+        $this->withSession(['admin_authenticated' => true])
+            ->get(route('admin.results.show', ['kandidat' => $candidate, 'q' => 'Budi']))
+            ->assertOk()
+            ->assertSee($second->name)
+            ->assertDontSee($first->name);
+    }
+
+    public function test_admin_can_move_an_employee_vote_to_another_candidate(): void
+    {
+        $employee = Employee::create(['nik' => 'MOVE-001', 'name' => 'Employee Pindah', 'department' => 'IT', 'employment_status' => 'tetap', 'position' => 'Developer']);
+        $source = Kandidat::create(['nomor_urut' => 1, 'name' => 'Kandidat Asal', 'photo' => 'kandidat/1.jpg']);
+        $target = Kandidat::create(['nomor_urut' => 2, 'name' => 'Kandidat Tujuan', 'photo' => 'kandidat/2.jpg']);
+        $vote = Voting::create(['employee_id' => $employee->id, 'kandidat_id' => $source->id]);
+
+        $this->patch(route('admin.results.vote.move', $vote), ['kandidat_id' => $target->id])
+            ->assertRedirect(route('admin.login'));
+
+        $this->withSession(['admin_authenticated' => true])
+            ->patch(route('admin.results.vote.move', $vote), ['kandidat_id' => $source->id])
+            ->assertSessionHasErrors('kandidat_id');
+
+        $this->withSession(['admin_authenticated' => true])
+            ->patch(route('admin.results.vote.move', $vote), ['kandidat_id' => $target->id])
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Suara Employee Pindah berhasil dipindahkan dari Kandidat Asal ke Kandidat Tujuan.');
+
+        $this->assertDatabaseHas('voting', [
+            'id' => $vote->id,
+            'employee_id' => $employee->id,
+            'kandidat_id' => $target->id,
+        ]);
+        $this->assertSame(0, $source->votes()->count());
+        $this->assertSame(1, $target->votes()->count());
+    }
+
     public function test_admin_can_export_summary_and_voter_details_to_excel(): void
     {
         $employee = Employee::create(['nik' => '0012345', 'name' => 'Budi', 'department' => 'Quality', 'employment_status' => 'tetap', 'position' => 'Inspector']);
@@ -118,6 +204,40 @@ class AdminManagementTest extends TestCase
             $this->assertSame(DataType::TYPE_STRING, $workbook->getSheetByName('Detail Pemilih')->getCell('B5')->getDataType());
             $this->assertSame('Budi', $workbook->getSheetByName('Detail Pemilih')->getCell('C5')->getValue());
             $this->assertSame('Kandidat Dua', $workbook->getSheetByName('Detail Pemilih')->getCell('H5')->getValue());
+        } finally {
+            $workbook->disconnectWorksheets();
+            unlink($temporaryPath);
+        }
+    }
+
+    public function test_admin_can_export_voters_for_one_candidate_to_excel(): void
+    {
+        $selectedEmployee = Employee::create(['nik' => '0001234', 'name' => 'Pemilih Kandidat Satu', 'department' => 'IT', 'employment_status' => 'tetap', 'position' => 'Developer']);
+        $otherEmployee = Employee::create(['nik' => '0005678', 'name' => 'Pemilih Kandidat Lain', 'department' => 'Finance', 'employment_status' => 'kontrak', 'position' => 'Staff']);
+        $candidate = Kandidat::create(['nomor_urut' => 1, 'name' => 'Kandidat Satu', 'photo' => 'kandidat/1.jpg']);
+        $otherCandidate = Kandidat::create(['nomor_urut' => 2, 'name' => 'Kandidat Dua', 'photo' => 'kandidat/2.jpg']);
+        Voting::create(['employee_id' => $selectedEmployee->id, 'kandidat_id' => $candidate->id]);
+        Voting::create(['employee_id' => $otherEmployee->id, 'kandidat_id' => $otherCandidate->id]);
+
+        $response = $this->withSession(['admin_authenticated' => true])
+            ->get(route('admin.results.candidate-export', $candidate));
+
+        $response->assertOk()->assertDownload('hasil-kandidat-01-kandidat-satu.xlsx');
+
+        $temporaryPath = tempnam(sys_get_temp_dir(), 'hasil-kandidat-');
+        file_put_contents($temporaryPath, $response->streamedContent());
+        $workbook = IOFactory::load($temporaryPath);
+
+        try {
+            $sheet = $workbook->getSheetByName('Pemilih Kandidat');
+            $this->assertNotNull($sheet);
+            $this->assertSame(1, $sheet->getCell('B2')->getValue());
+            $this->assertSame('Kandidat Satu', $sheet->getCell('D2')->getValue());
+            $this->assertSame(1, $sheet->getCell('B3')->getValue());
+            $this->assertSame('0001234', $sheet->getCell('B6')->getValue());
+            $this->assertSame(DataType::TYPE_STRING, $sheet->getCell('B6')->getDataType());
+            $this->assertSame('Pemilih Kandidat Satu', $sheet->getCell('C6')->getValue());
+            $this->assertNull($sheet->getCell('C7')->getValue());
         } finally {
             $workbook->disconnectWorksheets();
             unlink($temporaryPath);

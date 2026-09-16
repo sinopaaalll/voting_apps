@@ -7,16 +7,19 @@ select2(window, $);
 
 document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('submit', async (event) => {
-        const form = event.target.closest('[data-confirm-delete]');
+        const form = event.target.closest('[data-confirm-delete], [data-confirm-action]');
 
-        if (!form || form.dataset.deleteConfirmed === 'true') {
+        if (!form || form.dataset.confirmationAccepted === 'true') {
             return;
         }
 
         event.preventDefault();
+        const selectedOption = form.querySelector('[name="kandidat_id"] option:checked');
+        const confirmationText = (form.dataset.confirmText || 'Data yang sudah dihapus tidak dapat dipulihkan.')
+            .replace(':candidate', selectedOption?.textContent.trim() || 'kandidat yang dipilih');
         const result = await Swal.fire({
             title: form.dataset.confirmTitle || 'Hapus data ini?',
-            text: form.dataset.confirmText || 'Data yang sudah dihapus tidak dapat dipulihkan.',
+            text: confirmationText,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: form.dataset.confirmButton || 'Ya, hapus',
@@ -29,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (result.isConfirmed) {
-            form.dataset.deleteConfirmed = 'true';
+            form.dataset.confirmationAccepted = 'true';
             form.submit();
         }
     });
@@ -59,10 +62,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const statusFilterSelect = $('.js-status-filter-select');
+    const votingFilterSelect = $('.js-voting-filter-select');
 
-    if (statusFilterSelect.length) {
-        statusFilterSelect.select2({
+    if (votingFilterSelect.length) {
+        votingFilterSelect.select2({
             minimumResultsForSearch: Infinity,
             width: '100%',
         });
@@ -130,7 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const employeeFilterForm = document.querySelector('[data-employee-filter-form]');
     const employeeSearch = document.querySelector('[data-employee-search]');
-    const employeeStatusFilter = document.querySelector('[data-employee-status-filter]');
     const filterReset = document.querySelector('[data-filter-reset]');
     let employeeResults = document.querySelector('[data-employee-results]');
     let searchTimer;
@@ -201,7 +203,76 @@ document.addEventListener('DOMContentLoaded', () => {
             searchTimer = window.setTimeout(updateEmployeeResults, 250);
         });
         departmentSelect.on('change', updateEmployeeResults);
-        employeeStatusFilter?.addEventListener('change', updateEmployeeResults);
+        votingFilterSelect.on('change', updateEmployeeResults);
+    }
+
+    const candidateResultFilterForm = document.querySelector('[data-candidate-result-filter-form]');
+    const candidateResultSearch = document.querySelector('[data-candidate-result-search]');
+    const candidateResultReset = document.querySelector('[data-candidate-result-reset]');
+    let candidateResultList = document.querySelector('[data-candidate-result-list]');
+    let candidateSearchTimer;
+    let candidateSearchRequest;
+
+    const updateCandidateResults = async () => {
+        if (!candidateResultFilterForm || !candidateResultList) {
+            return;
+        }
+
+        window.clearTimeout(candidateSearchTimer);
+        const parameters = new URLSearchParams(new FormData(candidateResultFilterForm));
+        Array.from(parameters.entries()).forEach(([key, value]) => {
+            if (!value.trim()) {
+                parameters.delete(key);
+            }
+        });
+
+        const url = `${candidateResultFilterForm.action}${parameters.size ? `?${parameters.toString()}` : ''}`;
+        candidateSearchRequest?.abort();
+        const currentRequest = new AbortController();
+        candidateSearchRequest = currentRequest;
+        candidateResultList.setAttribute('aria-busy', 'true');
+
+        try {
+            const response = await fetch(url, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                signal: currentRequest.signal,
+            });
+
+            if (!response.ok) {
+                throw new Error('Daftar pemilih kandidat gagal dimuat.');
+            }
+
+            const page = new DOMParser().parseFromString(await response.text(), 'text/html');
+            const newResultList = page.querySelector('[data-candidate-result-list]');
+
+            if (!newResultList) {
+                throw new Error('Daftar pemilih kandidat tidak ditemukan.');
+            }
+
+            candidateResultList.replaceWith(newResultList);
+            candidateResultList = newResultList;
+            window.history.replaceState({}, '', url);
+            candidateResultReset.hidden = parameters.size === 0;
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                window.location.assign(url);
+            }
+        } finally {
+            if (candidateSearchRequest === currentRequest) {
+                candidateResultList?.removeAttribute('aria-busy');
+            }
+        }
+    };
+
+    if (candidateResultFilterForm) {
+        candidateResultFilterForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            updateCandidateResults();
+        });
+        candidateResultSearch?.addEventListener('input', () => {
+            window.clearTimeout(candidateSearchTimer);
+            candidateSearchTimer = window.setTimeout(updateCandidateResults, 250);
+        });
     }
 
     const importForm = document.querySelector('[data-import-form]');

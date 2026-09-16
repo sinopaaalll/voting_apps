@@ -20,6 +20,8 @@ class AdminEmployeeController extends Controller
 {
     public function index(Request $request): View
     {
+        $votingStatus = $request->string('voting_status')->value();
+
         $employees = Employee::query()
             ->withExists('voting')
             ->when($request->filled('q'), function ($query) use ($request): void {
@@ -30,7 +32,8 @@ class AdminEmployeeController extends Controller
                 });
             })
             ->when($request->filled('department'), fn ($query) => $query->where('department', $request->string('department')->value()))
-            ->when($request->filled('status'), fn ($query) => $query->where('employment_status', $request->string('status')->value()))
+            ->when($votingStatus === 'voted', fn ($query) => $query->whereHas('voting'))
+            ->when($votingStatus === 'not_voted', fn ($query) => $query->whereDoesntHave('voting'))
             ->orderBy('name')
             ->paginate(12)
             ->withQueryString();

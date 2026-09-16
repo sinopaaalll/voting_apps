@@ -37,14 +37,13 @@
             <option value="{{ $department }}" @selected(request('department') === $department)>{{ $department }}</option>
         @endforeach
     </select>
-    <select class="js-status-filter-select" name="status" aria-label="Filter status" data-employee-status-filter>
-        <option value="">Semua status</option>
-        @foreach (['tetap' => 'Tetap', 'kontrak' => 'Kontrak', 'magang' => 'Magang'] as $value => $label)
-            <option value="{{ $value }}" @selected(request('status') === $value)>{{ $label }}</option>
-        @endforeach
+    <select class="js-voting-filter-select" name="voting_status" aria-label="Filter status voting">
+        <option value="">Semua status voting</option>
+        <option value="voted" @selected(request('voting_status') === 'voted')>Sudah memilih</option>
+        <option value="not_voted" @selected(request('voting_status') === 'not_voted')>Belum memilih</option>
     </select>
     <button class="btn btn-dark" type="submit">Terapkan</button>
-    <a class="btn btn-ghost" href="{{ route('admin.employees.index') }}" data-filter-reset @if (! request()->hasAny(['q', 'department', 'status'])) hidden @endif>Reset</a>
+    <a class="btn btn-ghost" href="{{ route('admin.employees.index') }}" data-filter-reset @if (! request()->hasAny(['q', 'department', 'voting_status'])) hidden @endif>Reset</a>
 </form>
 
 <section class="employee-results" data-employee-results aria-live="polite">
