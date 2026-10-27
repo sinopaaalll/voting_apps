@@ -78,6 +78,24 @@ class AdminManagementTest extends TestCase
             ->assertDontSee($voted->name);
     }
 
+    public function test_admin_can_filter_employees_by_birth_date_completeness(): void
+    {
+        $withBirthDate = Employee::create(['nik' => 'EMP-DATE-FILLED', 'name' => 'Tanggal Sudah Diisi', 'birth_date' => '1990-01-31', 'department' => 'IT', 'employment_status' => 'tetap', 'position' => 'Developer']);
+        $withoutBirthDate = Employee::create(['nik' => 'EMP-DATE-MISSING', 'name' => 'Tanggal Belum Diisi', 'birth_date' => null, 'department' => 'IT', 'employment_status' => 'tetap', 'position' => 'Developer']);
+
+        $this->withSession(['admin_authenticated' => true])
+            ->get(route('admin.employees.index', ['birth_date_status' => 'missing']))
+            ->assertOk()
+            ->assertSee($withoutBirthDate->name)
+            ->assertDontSee($withBirthDate->name);
+
+        $this->withSession(['admin_authenticated' => true])
+            ->get(route('admin.employees.index', ['birth_date_status' => 'filled']))
+            ->assertOk()
+            ->assertSee($withBirthDate->name)
+            ->assertDontSee($withoutBirthDate->name);
+    }
+
     public function test_dashboard_summary_cards_link_to_their_filtered_data(): void
     {
         $response = $this->withSession(['admin_authenticated' => true])

@@ -71,6 +71,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const birthDateFilterSelect = $('.js-birth-date-filter-select');
+
+    if (birthDateFilterSelect.length) {
+        birthDateFilterSelect.select2({
+            minimumResultsForSearch: Infinity,
+            width: '100%',
+        });
+    }
+
     document.querySelectorAll('[data-image-upload]').forEach((imageUpload) => {
         const input = imageUpload.querySelector('[data-image-input]');
         const preview = imageUpload.querySelector('[data-image-preview]');
@@ -204,6 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         departmentSelect.on('change', updateEmployeeResults);
         votingFilterSelect.on('change', updateEmployeeResults);
+        birthDateFilterSelect.on('change', updateEmployeeResults);
     }
 
     const candidateResultFilterForm = document.querySelector('[data-candidate-result-filter-form]');

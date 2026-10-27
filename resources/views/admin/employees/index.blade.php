@@ -42,8 +42,13 @@
         <option value="voted" @selected(request('voting_status') === 'voted')>Sudah memilih</option>
         <option value="not_voted" @selected(request('voting_status') === 'not_voted')>Belum memilih</option>
     </select>
+    <select class="js-birth-date-filter-select" name="birth_date_status" aria-label="Filter kelengkapan tanggal lahir">
+        <option value="">Semua tanggal lahir</option>
+        <option value="filled" @selected(request('birth_date_status') === 'filled')>Sudah diisi</option>
+        <option value="missing" @selected(request('birth_date_status') === 'missing')>Belum diisi</option>
+    </select>
     <button class="btn btn-dark" type="submit">Terapkan</button>
-    <a class="btn btn-ghost" href="{{ route('admin.employees.index') }}" data-filter-reset @if (! request()->hasAny(['q', 'department', 'voting_status'])) hidden @endif>Reset</a>
+    <a class="btn btn-ghost" href="{{ route('admin.employees.index') }}" data-filter-reset @if (! request()->hasAny(['q', 'department', 'voting_status', 'birth_date_status'])) hidden @endif>Reset</a>
 </form>
 
 <section class="employee-results" data-employee-results aria-live="polite">

@@ -123,7 +123,7 @@ h2 { line-height: 1.2; letter-spacing: -.035em; }
 .quick-card h3 { margin-bottom: 2px; }.quick-card p { margin: 0; color: var(--muted); font-size: .88rem; }
 .quick-icon { width: 45px; height: 45px; display: grid; place-items: center; flex: none; border-radius: 13px; color: var(--primary); background: #e5f3f6; font-weight: 900; }
 
-.filter-bar { display: grid; grid-template-columns: 1.4fr 1fr 1fr auto auto; gap: 10px; margin-bottom: 18px; }
+.filter-bar { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr auto auto; gap: 10px; margin-bottom: 18px; }
 .result-detail-filter { grid-template-columns: minmax(0, 1fr) auto auto; }
 .employee-results { transition: opacity .18s ease; }
 .employee-results[aria-busy="true"] { opacity: .55; pointer-events: none; }
