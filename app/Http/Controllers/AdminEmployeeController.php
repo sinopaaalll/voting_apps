@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -139,11 +140,13 @@ class AdminEmployeeController extends Controller
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Employee');
         $sheet->fromArray([
-            ['nik', 'name', 'department', 'employment_status', 'position'],
-            ['EMP-003', 'Budi Santoso', 'Finance', 'tetap', 'Finance Officer'],
+            ['nik', 'name', 'birth_date', 'department', 'employment_status', 'position'],
+            ['EMP-003', 'Budi Santoso', null, 'Finance', 'tetap', 'Finance Officer'],
         ]);
-        $sheet->getStyle('A1:E1')->getFont()->setBold(true);
-        foreach (range('A', 'E') as $column) {
+        $sheet->setCellValue('C2', Date::PHPToExcel(new \DateTimeImmutable('1990-01-31')));
+        $sheet->getStyle('C2')->getNumberFormat()->setFormatCode('yyyy-mm-dd');
+        $sheet->getStyle('A1:F1')->getFont()->setBold(true);
+        foreach (range('A', 'F') as $column) {
             $sheet->getColumnDimension($column)->setAutoSize(true);
         }
 
@@ -169,6 +172,7 @@ class AdminEmployeeController extends Controller
                 Rule::unique('employee', 'nik')->ignore($employee?->id),
             ],
             'name' => ['required', 'string', 'max:100'],
+            'birth_date' => ['required', 'date_format:Y-m-d', 'after:1900-01-01', 'before:today'],
             'department' => ['required', 'string', 'max:100'],
             'employment_status' => ['required', Rule::in(['tetap', 'kontrak', 'magang'])],
             'position' => ['required', 'string', 'max:100'],
@@ -177,6 +181,10 @@ class AdminEmployeeController extends Controller
             'nik.regex' => 'NIK hanya boleh berisi huruf, angka, titik, garis miring, atau tanda hubung.',
             'nik.unique' => 'NIK sudah digunakan.',
             'name.required' => 'Nama employee wajib diisi.',
+            'birth_date.required' => 'Tanggal lahir wajib diisi.',
+            'birth_date.date_format' => 'Tanggal lahir harus berformat YYYY-MM-DD.',
+            'birth_date.after' => 'Tanggal lahir tidak valid.',
+            'birth_date.before' => 'Tanggal lahir tidak valid.',
             'department.required' => 'Department wajib diisi.',
             'employment_status.required' => 'Status karyawan wajib dipilih.',
             'employment_status.in' => 'Status karyawan tidak valid.',

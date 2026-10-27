@@ -1,9 +1,10 @@
 <div class="form-grid">
     <label class="field"><span>NIK</span><input name="nik" value="{{ old('nik', $employee->nik ?? '') }}" maxlength="30" placeholder="EMP-001" required></label>
     <label class="field"><span>Nama lengkap</span><input name="name" value="{{ old('name', $employee->name ?? '') }}" maxlength="100" required></label>
+    <label class="field"><span>Tanggal lahir</span><input type="date" name="birth_date" value="{{ old('birth_date', isset($employee) ? $employee->birth_date?->format('Y-m-d') : '') }}" required></label>
     <label class="field"><span>Department</span><input name="department" value="{{ old('department', $employee->department ?? '') }}" maxlength="100" placeholder="Contoh: Human Resources" required></label>
     <label class="field"><span>Jabatan</span><input name="position" value="{{ old('position', $employee->position ?? '') }}" maxlength="100" placeholder="Contoh: HR Specialist" required></label>
-    <label class="field field-wide">
+    <label class="field">
         <span>Status karyawan</span>
         <select class="js-employment-status-select" name="employment_status" data-placeholder="Pilih status" required>
             <option value="">Pilih status</option>

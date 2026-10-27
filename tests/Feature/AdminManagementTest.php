@@ -19,16 +19,40 @@ class AdminManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_admin_can_open_employee_create_and_edit_forms_with_birth_date_field(): void
+    {
+        $employee = Employee::create([
+            'nik' => 'EMP-FORM-001',
+            'name' => 'Employee Form',
+            'birth_date' => '1990-01-31',
+            'department' => 'IT',
+            'employment_status' => 'tetap',
+            'position' => 'Developer',
+        ]);
+
+        $this->withSession(['admin_authenticated' => true])
+            ->get(route('admin.employees.create'))
+            ->assertOk()
+            ->assertSee('name="birth_date"', false);
+
+        $this->withSession(['admin_authenticated' => true])
+            ->get(route('admin.employees.edit', $employee))
+            ->assertOk()
+            ->assertSee('name="birth_date"', false)
+            ->assertSee('value="1990-01-31"', false);
+    }
+
     public function test_admin_can_create_employee_and_duplicate_nik_is_rejected(): void
     {
         $data = [
             'nik' => 'emp-001', 'name' => 'Andi Pratama', 'department' => 'IT',
-            'employment_status' => 'tetap', 'position' => 'Developer',
+            'birth_date' => '1990-01-31', 'employment_status' => 'tetap', 'position' => 'Developer',
         ];
 
         $this->withSession(['admin_authenticated' => true])->post(route('admin.employees.store'), $data)
             ->assertRedirect(route('admin.employees.index'));
         $this->assertDatabaseHas('employee', ['nik' => 'EMP-001']);
+        $this->assertSame('1990-01-31', Employee::where('nik', 'EMP-001')->firstOrFail()->birth_date->toDateString());
 
         $this->withSession(['admin_authenticated' => true])->post(route('admin.employees.store'), $data)
             ->assertSessionHasErrors('nik');
@@ -258,11 +282,11 @@ class AdminManagementTest extends TestCase
 
     public function test_admin_can_import_excel_and_existing_nik_is_updated(): void
     {
-        Employee::create(['nik' => 'EMP-001', 'name' => 'Nama Lama', 'department' => 'IT', 'employment_status' => 'tetap', 'position' => 'Developer']);
+        Employee::create(['nik' => 'EMP-001', 'name' => 'Nama Lama', 'birth_date' => '1980-01-01', 'department' => 'IT', 'employment_status' => 'tetap', 'position' => 'Developer']);
         $file = $this->excelUpload([
-            ['nik', 'nama', 'departemen', 'status_karyawan', 'jabatan'],
-            ['EMP-001', 'Nama Baru', 'Technology', 'Kontrak', 'Senior Developer'],
-            ['EMP-003', 'Budi Santoso', 'Finance', 'Tetap', 'Finance Officer'],
+            ['nik', 'nama', 'tanggal_lahir', 'departemen', 'status_karyawan', 'jabatan'],
+            ['EMP-001', 'Nama Baru', '15/04/1989', 'Technology', 'Kontrak', 'Senior Developer'],
+            ['EMP-003', 'Budi Santoso', '1993-09-20', 'Finance', 'Tetap', 'Finance Officer'],
         ]);
 
         $this->withSession(['admin_authenticated' => true])
@@ -270,16 +294,16 @@ class AdminManagementTest extends TestCase
             ->assertRedirect()
             ->assertSessionHas('success', 'Import selesai: 1 employee ditambahkan dan 1 diperbarui.');
 
-        $this->assertDatabaseHas('employee', ['nik' => 'EMP-001', 'name' => 'Nama Baru', 'employment_status' => 'kontrak']);
-        $this->assertDatabaseHas('employee', ['nik' => 'EMP-003', 'department' => 'Finance']);
+        $this->assertDatabaseHas('employee', ['nik' => 'EMP-001', 'name' => 'Nama Baru', 'birth_date' => '1989-04-15', 'employment_status' => 'kontrak']);
+        $this->assertDatabaseHas('employee', ['nik' => 'EMP-003', 'birth_date' => '1993-09-20', 'department' => 'Finance']);
     }
 
     public function test_invalid_import_is_rejected_atomically(): void
     {
         $file = $this->excelUpload([
-            ['nik', 'name', 'department', 'employment_status', 'position'],
-            ['EMP-010', 'Data Valid', 'IT', 'tetap', 'Developer'],
-            ['EMP-011', 'Data Salah', 'IT', 'freelance', 'Developer'],
+            ['nik', 'name', 'birth_date', 'department', 'employment_status', 'position'],
+            ['EMP-010', 'Data Valid', '1990-01-01', 'IT', 'tetap', 'Developer'],
+            ['EMP-011', 'Data Salah', '1990-01-01', 'IT', 'freelance', 'Developer'],
         ]);
 
         $this->withSession(['admin_authenticated' => true])
@@ -292,9 +316,9 @@ class AdminManagementTest extends TestCase
 
     public function test_excel_import_has_no_one_thousand_row_limit(): void
     {
-        $rows = [['nik', 'name', 'department', 'employment_status', 'position']];
+        $rows = [['nik', 'name', 'birth_date', 'department', 'employment_status', 'position']];
         foreach (range(1, 1205) as $number) {
-            $rows[] = [sprintf('BULK-%05d', $number), "Employee {$number}", 'Operations', 'tetap', 'Staff'];
+            $rows[] = [sprintf('BULK-%05d', $number), "Employee {$number}", '1990-01-01', 'Operations', 'tetap', 'Staff'];
         }
 
         DB::flushQueryLog();
@@ -334,10 +358,23 @@ class AdminManagementTest extends TestCase
 
     public function test_admin_can_download_excel_import_template(): void
     {
-        $this->withSession(['admin_authenticated' => true])
+        $response = $this->withSession(['admin_authenticated' => true])
             ->get(route('admin.employees.template'))
             ->assertOk()
             ->assertDownload('template-import-employee.xlsx');
+
+        $temporaryPath = tempnam(sys_get_temp_dir(), 'template-employee-');
+        file_put_contents($temporaryPath, $response->streamedContent());
+        $workbook = IOFactory::load($temporaryPath);
+
+        try {
+            $sheet = $workbook->getActiveSheet();
+            $this->assertSame('birth_date', $sheet->getCell('C1')->getValue());
+            $this->assertSame('yyyy-mm-dd', $sheet->getStyle('C2')->getNumberFormat()->getFormatCode());
+        } finally {
+            $workbook->disconnectWorksheets();
+            unlink($temporaryPath);
+        }
     }
 
     private function excelUpload(array $rows): UploadedFile

@@ -20,7 +20,7 @@ class DatabaseSchemaTest extends TestCase
             $this->assertFalse(Schema::hasTable($table));
         }
 
-        $this->assertTrue(Schema::hasColumns('employee', ['nik', 'name', 'department', 'employment_status', 'position']));
+        $this->assertTrue(Schema::hasColumns('employee', ['nik', 'name', 'birth_date', 'department', 'employment_status', 'position']));
         $this->assertTrue(Schema::hasColumns('kandidat', ['nomor_urut', 'name', 'photo']));
         $this->assertFalse(Schema::hasColumn('kandidat', 'visi_misi'));
         $this->assertTrue(Schema::hasColumns('voting', ['employee_id', 'kandidat_id']));

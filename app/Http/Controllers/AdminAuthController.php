@@ -39,7 +39,9 @@ class AdminAuthController extends Controller
 
         $usernameMatches = hash_equals((string) config('voting.admin.username'), $validated['username']);
         $passwordHash = (string) config('voting.admin.password_hash');
-        $passwordMatches = $passwordHash !== '' && Hash::check($validated['password'], $passwordHash);
+        $hashInfo = password_get_info($passwordHash);
+        $hasValidBcryptHash = ($hashInfo['algoName'] ?? null) === 'bcrypt';
+        $passwordMatches = $hasValidBcryptHash && Hash::check($validated['password'], $passwordHash);
 
         if (! $usernameMatches || ! $passwordMatches) {
             RateLimiter::hit($key, 60);

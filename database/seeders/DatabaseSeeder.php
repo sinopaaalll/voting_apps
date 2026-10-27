@@ -16,8 +16,8 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         Employee::query()->insert([
-            ['nik' => 'EMP-001', 'name' => 'Andi Pratama', 'department' => 'Operasional', 'employment_status' => 'tetap', 'position' => 'Supervisor', 'created_at' => now(), 'updated_at' => now()],
-            ['nik' => 'EMP-002', 'name' => 'Siti Rahma', 'department' => 'Human Resources', 'employment_status' => 'kontrak', 'position' => 'HR Specialist', 'created_at' => now(), 'updated_at' => now()],
+            ['nik' => 'EMP-001', 'name' => 'Andi Pratama', 'birth_date' => '1990-01-31', 'department' => 'Operasional', 'employment_status' => 'tetap', 'position' => 'Supervisor', 'created_at' => now(), 'updated_at' => now()],
+            ['nik' => 'EMP-002', 'name' => 'Siti Rahma', 'birth_date' => '1992-05-18', 'department' => 'Human Resources', 'employment_status' => 'kontrak', 'position' => 'HR Specialist', 'created_at' => now(), 'updated_at' => now()],
         ]);
     }
 }

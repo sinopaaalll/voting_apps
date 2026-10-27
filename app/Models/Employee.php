@@ -12,10 +12,18 @@ class Employee extends Model
     protected $fillable = [
         'nik',
         'name',
+        'birth_date',
         'department',
         'employment_status',
         'position',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'birth_date' => 'date',
+        ];
+    }
 
     public function voting(): HasOne
     {

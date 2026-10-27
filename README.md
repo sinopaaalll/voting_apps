@@ -1,6 +1,6 @@
 # SuaraKita
 
-Aplikasi voting internal sederhana berbasis Laravel 12. Employee masuk menggunakan NIK dan hanya dapat memilih satu kali. Admin mengelola employee, kandidat, melihat detail pemilih per kandidat, dan mengekspor hasil ke Excel.
+Aplikasi voting internal sederhana berbasis Laravel 12. Employee masuk menggunakan NIK dan konfirmasi tanggal lahir, lalu hanya dapat memilih satu kali. Admin mengelola employee, kandidat, melihat detail pemilih per kandidat, dan mengekspor hasil ke Excel.
 
 Antarmuka pemilih dirancang mobile-first untuk proses voting melalui ponsel.
 
@@ -43,9 +43,9 @@ Laravel juga membuat tabel internal `migrations` untuk mencatat migration yang s
 
 Admin dapat mengimpor file XLSX, XLS, atau CSV melalui halaman Employee tanpa batas jumlah baris atau ukuran file dari aplikasi. XLSX dan CSV diproses secara streaming dan disimpan dengan bulk upsert per batch agar penggunaan memori serta jumlah query tetap rendah. Unduh template yang tersedia pada dialog Import Excel dan gunakan header:
 
-`nik`, `name`, `department`, `employment_status`, `position`
+`nik`, `name`, `birth_date`, `department`, `employment_status`, `position`
 
-Header Indonesia `nama`, `departemen`, `status_karyawan`, dan `jabatan` juga didukung. Status hanya boleh berisi `tetap`, `kontrak`, atau `magang`. NIK baru akan ditambahkan dan NIK yang sudah ada akan diperbarui. Seluruh file divalidasi terlebih dahulu; bila satu baris bermasalah, tidak ada data yang diimpor.
+Header Indonesia `nama`, `tanggal_lahir`, `departemen`, `status_karyawan`, dan `jabatan` juga didukung. Tanggal lahir menggunakan format `YYYY-MM-DD` atau `DD/MM/YYYY`. Status hanya boleh berisi `tetap`, `kontrak`, atau `magang`. NIK baru akan ditambahkan dan NIK yang sudah ada akan diperbarui. Seluruh file divalidasi terlebih dahulu; bila satu baris bermasalah, tidak ada data yang diimpor.
 
 Checkbox pada header tabel memilih seluruh employee yang dapat dihapus pada halaman aktif. Employee yang sudah voting tetap dilindungi dan tidak bisa dihapus.
 

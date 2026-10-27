@@ -22,7 +22,7 @@
         <label class="upload-field">
             <span>Pilih file</span>
             <input type="file" name="file" accept=".xlsx,.xls,.csv" required>
-            <small>Header: nik, name, department, employment_status, position</small>
+            <small>Header: nik, name, birth_date, department, employment_status, position</small>
         </label>
         <button class="btn btn-primary btn-block" type="submit" data-import-button>Import employee</button>
         <div class="import-loading" data-import-loading hidden role="status" aria-live="polite"><span class="loading-spinner"></span><div><strong>Sedang memproses data</strong><small>Jangan tutup halaman ini.</small></div></div>
@@ -61,7 +61,7 @@
         <thead>
             <tr>
                 <th class="checkbox-cell"><input type="checkbox" data-select-all aria-label="Pilih semua employee yang dapat dihapus"></th>
-                <th>Employee</th><th>Department</th><th>Status</th><th>Voting</th><th class="align-right">Aksi</th>
+                <th>Employee</th><th>Tanggal lahir</th><th>Department</th><th>Status</th><th>Voting</th><th class="align-right">Aksi</th>
             </tr>
         </thead>
         <tbody>
@@ -71,6 +71,7 @@
                         <input type="checkbox" name="employee_ids[]" value="{{ $employee->id }}" form="bulk-delete-form" data-row-checkbox aria-label="Pilih {{ $employee->name }}" @disabled($employee->voting_exists)>
                     </td>
                     <td data-label="Employee"><strong>{{ $employee->name }}</strong><small>{{ $employee->nik }} · {{ $employee->position }}</small></td>
+                    <td data-label="Tanggal lahir">{{ $employee->birth_date?->format('d-m-Y') ?? 'Belum diisi' }}</td>
                     <td data-label="Department">{{ $employee->department }}</td>
                     <td data-label="Status"><span class="badge badge-neutral">{{ ucfirst($employee->employment_status) }}</span></td>
                     <td data-label="Voting"><span class="badge {{ $employee->voting_exists ? 'badge-success' : 'badge-warning' }}">{{ $employee->voting_exists ? 'Sudah memilih' : 'Belum memilih' }}</span></td>
@@ -83,7 +84,7 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="6"><div class="empty-state"><strong>Data employee belum tersedia</strong><p>Tambah manual atau import file Excel untuk memulai.</p></div></td></tr>
+                <tr><td colspan="7"><div class="empty-state"><strong>Data employee belum tersedia</strong><p>Tambah manual atau import file Excel untuk memulai.</p></div></td></tr>
             @endforelse
         </tbody>
     </table>

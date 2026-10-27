@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Employee;
 use DateInterval;
+use DateTimeImmutable;
 use DateTimeInterface;
 use Generator;
 use Illuminate\Http\UploadedFile;
@@ -14,6 +15,7 @@ use OpenSpout\Reader\CSV\Reader as CsvReader;
 use OpenSpout\Reader\ReaderInterface;
 use OpenSpout\Reader\XLSX\Reader as XlsxReader;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 
 class EmployeeSpreadsheetImporter
 {
@@ -74,6 +76,7 @@ class EmployeeSpreadsheetImporter
         $data = [
             'nik' => Str::upper(trim($this->stringValue($row[$columns['nik']] ?? ''))),
             'name' => trim($this->stringValue($row[$columns['name']] ?? '')),
+            'birth_date' => $this->birthDateValue($row[$columns['birth_date']] ?? ''),
             'department' => trim($this->stringValue($row[$columns['department']] ?? '')),
             'employment_status' => Str::lower(trim($this->stringValue($row[$columns['employment_status']] ?? ''))),
             'position' => trim($this->stringValue($row[$columns['position']] ?? '')),
@@ -89,6 +92,7 @@ class EmployeeSpreadsheetImporter
         $labels = [
             'nik' => 'NIK',
             'name' => 'Nama',
+            'birth_date' => 'Tanggal lahir',
             'department' => 'Department',
             'employment_status' => 'Status karyawan',
             'position' => 'Jabatan',
@@ -99,7 +103,7 @@ class EmployeeSpreadsheetImporter
         foreach ($labels as $field => $label) {
             if ($data[$field] === '') {
                 $errors[] = "{$label} wajib diisi.";
-            } elseif (mb_strlen($data[$field]) > $limits[$field]) {
+            } elseif (isset($limits[$field]) && mb_strlen($data[$field]) > $limits[$field]) {
                 $errors[] = "{$label} melebihi batas karakter.";
             }
         }
@@ -110,6 +114,10 @@ class EmployeeSpreadsheetImporter
 
         if ($data['employment_status'] !== '' && ! in_array($data['employment_status'], ['tetap', 'kontrak', 'magang'], true)) {
             $errors[] = 'Status harus tetap, kontrak, atau magang.';
+        }
+
+        if ($data['birth_date'] !== '' && ! $this->isValidBirthDate($data['birth_date'])) {
+            $errors[] = 'Tanggal lahir harus berformat YYYY-MM-DD atau DD/MM/YYYY dan tidak boleh di masa depan.';
         }
 
         if ($errors !== []) {
@@ -134,7 +142,7 @@ class EmployeeSpreadsheetImporter
         Employee::upsert(
             $records,
             ['nik'],
-            ['name', 'department', 'employment_status', 'position', 'updated_at'],
+            ['name', 'birth_date', 'department', 'employment_status', 'position', 'updated_at'],
         );
 
         $created += count($rows) - $existingCount;
@@ -184,7 +192,10 @@ class EmployeeSpreadsheetImporter
             foreach ($spreadsheet->getActiveSheet()->getRowIterator() as $row) {
                 $values = [];
                 foreach ($row->getCellIterator() as $cell) {
-                    $values[] = $cell->getValue();
+                    $value = $cell->getValue();
+                    $values[] = ExcelDate::isDateTime($cell) && is_numeric($value)
+                        ? ExcelDate::excelToDateTimeObject((float) $value)
+                        : $value;
                 }
 
                 yield $row->getRowIndex() => $values;
@@ -204,6 +215,7 @@ class EmployeeSpreadsheetImporter
         $aliases = [
             'nik' => ['nik'],
             'name' => ['name', 'nama'],
+            'birth_date' => ['birth_date', 'tanggal_lahir', 'tgl_lahir'],
             'department' => ['department', 'departemen'],
             'employment_status' => ['employment_status', 'status_karyawan', 'status'],
             'position' => ['position', 'jabatan'],
@@ -247,6 +259,41 @@ class EmployeeSpreadsheetImporter
             is_scalar($value) => (string) $value,
             default => '',
         };
+    }
+
+    private function birthDateValue(mixed $value): string
+    {
+        if ($value instanceof DateTimeInterface) {
+            return $value->format('Y-m-d');
+        }
+
+        $value = trim($this->stringValue($value));
+        if ($value === '') {
+            return '';
+        }
+
+        foreach (['Y-m-d', 'd/m/Y', 'd-m-Y', 'd.m.Y', 'Y/m/d'] as $format) {
+            $date = DateTimeImmutable::createFromFormat('!'.$format, $value);
+            $errors = DateTimeImmutable::getLastErrors();
+
+            if ($date !== false && ($errors === false || ($errors['warning_count'] === 0 && $errors['error_count'] === 0)) && $date->format($format) === $value) {
+                return $date->format('Y-m-d');
+            }
+        }
+
+        return $value;
+    }
+
+    private function isValidBirthDate(string $value): bool
+    {
+        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+        $errors = DateTimeImmutable::getLastErrors();
+
+        return $date !== false
+            && ($errors === false || ($errors['warning_count'] === 0 && $errors['error_count'] === 0))
+            && $date->format('Y-m-d') === $value
+            && $date > new DateTimeImmutable('1900-01-01')
+            && $date < new DateTimeImmutable('today');
     }
 
     private function isEmptyRow(array $row): bool
