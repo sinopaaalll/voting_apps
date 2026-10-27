@@ -22,7 +22,7 @@
         <label class="upload-field">
             <span>Pilih file</span>
             <input type="file" name="file" accept=".xlsx,.xls,.csv" required>
-            <small>Header: nik, name, birth_date, department, employment_status, position</small>
+            <small>Header: nik, name, birth_date, department, employment_status, position. Tanggal lahir boleh kosong.</small>
         </label>
         <button class="btn btn-primary btn-block" type="submit" data-import-button>Import employee</button>
         <div class="import-loading" data-import-loading hidden role="status" aria-live="polite"><span class="loading-spinner"></span><div><strong>Sedang memproses data</strong><small>Jangan tutup halaman ini.</small></div></div>

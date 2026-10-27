@@ -89,10 +89,9 @@ class EmployeeSpreadsheetImporter
 
     private function validatePreparedRow(array $data, int $rowNumber): void
     {
-        $labels = [
+        $requiredLabels = [
             'nik' => 'NIK',
             'name' => 'Nama',
-            'birth_date' => 'Tanggal lahir',
             'department' => 'Department',
             'employment_status' => 'Status karyawan',
             'position' => 'Jabatan',
@@ -100,7 +99,7 @@ class EmployeeSpreadsheetImporter
         $limits = ['nik' => 30, 'name' => 100, 'department' => 100, 'employment_status' => 20, 'position' => 100];
         $errors = [];
 
-        foreach ($labels as $field => $label) {
+        foreach ($requiredLabels as $field => $label) {
             if ($data[$field] === '') {
                 $errors[] = "{$label} wajib diisi.";
             } elseif (isset($limits[$field]) && mb_strlen($data[$field]) > $limits[$field]) {
@@ -116,7 +115,7 @@ class EmployeeSpreadsheetImporter
             $errors[] = 'Status harus tetap, kontrak, atau magang.';
         }
 
-        if ($data['birth_date'] !== '' && ! $this->isValidBirthDate($data['birth_date'])) {
+        if ($data['birth_date'] !== null && ! $this->isValidBirthDate($data['birth_date'])) {
             $errors[] = 'Tanggal lahir harus berformat YYYY-MM-DD atau DD/MM/YYYY dan tidak boleh di masa depan.';
         }
 
@@ -261,7 +260,7 @@ class EmployeeSpreadsheetImporter
         };
     }
 
-    private function birthDateValue(mixed $value): string
+    private function birthDateValue(mixed $value): ?string
     {
         if ($value instanceof DateTimeInterface) {
             return $value->format('Y-m-d');
@@ -269,7 +268,7 @@ class EmployeeSpreadsheetImporter
 
         $value = trim($this->stringValue($value));
         if ($value === '') {
-            return '';
+            return null;
         }
 
         foreach (['Y-m-d', 'd/m/Y', 'd-m-Y', 'd.m.Y', 'Y/m/d'] as $format) {

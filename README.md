@@ -45,7 +45,7 @@ Admin dapat mengimpor file XLSX, XLS, atau CSV melalui halaman Employee tanpa ba
 
 `nik`, `name`, `birth_date`, `department`, `employment_status`, `position`
 
-Header Indonesia `nama`, `tanggal_lahir`, `departemen`, `status_karyawan`, dan `jabatan` juga didukung. Tanggal lahir menggunakan format `YYYY-MM-DD` atau `DD/MM/YYYY`. Status hanya boleh berisi `tetap`, `kontrak`, atau `magang`. NIK baru akan ditambahkan dan NIK yang sudah ada akan diperbarui. Seluruh file divalidasi terlebih dahulu; bila satu baris bermasalah, tidak ada data yang diimpor.
+Header Indonesia `nama`, `tanggal_lahir`, `departemen`, `status_karyawan`, dan `jabatan` juga didukung. Tanggal lahir boleh kosong. Jika diisi, gunakan format `YYYY-MM-DD` atau `DD/MM/YYYY`. Status hanya boleh berisi `tetap`, `kontrak`, atau `magang`. NIK baru akan ditambahkan dan NIK yang sudah ada akan diperbarui. Seluruh file divalidasi terlebih dahulu; bila satu baris bermasalah, tidak ada data yang diimpor.
 
 Checkbox pada header tabel memilih seluruh employee yang dapat dihapus pada halaman aktif. Employee yang sudah voting tetap dilindungi dan tidak bisa dihapus.
 

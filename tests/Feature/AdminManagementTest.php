@@ -283,19 +283,24 @@ class AdminManagementTest extends TestCase
     public function test_admin_can_import_excel_and_existing_nik_is_updated(): void
     {
         Employee::create(['nik' => 'EMP-001', 'name' => 'Nama Lama', 'birth_date' => '1980-01-01', 'department' => 'IT', 'employment_status' => 'tetap', 'position' => 'Developer']);
+        Employee::create(['nik' => 'EMP-002', 'name' => 'Tanggal Akan Dikosongkan', 'birth_date' => '1985-02-02', 'department' => 'IT', 'employment_status' => 'tetap', 'position' => 'Developer']);
         $file = $this->excelUpload([
             ['nik', 'nama', 'tanggal_lahir', 'departemen', 'status_karyawan', 'jabatan'],
             ['EMP-001', 'Nama Baru', '15/04/1989', 'Technology', 'Kontrak', 'Senior Developer'],
+            ['EMP-002', 'Tanggal Kosong', '', 'Technology', 'Tetap', 'Developer'],
             ['EMP-003', 'Budi Santoso', '1993-09-20', 'Finance', 'Tetap', 'Finance Officer'],
+            ['EMP-004', 'Employee Tanpa Tanggal Lahir', '', 'Finance', 'Magang', 'Intern'],
         ]);
 
         $this->withSession(['admin_authenticated' => true])
             ->post(route('admin.employees.import'), ['file' => $file])
             ->assertRedirect()
-            ->assertSessionHas('success', 'Import selesai: 1 employee ditambahkan dan 1 diperbarui.');
+            ->assertSessionHas('success', 'Import selesai: 2 employee ditambahkan dan 2 diperbarui.');
 
         $this->assertDatabaseHas('employee', ['nik' => 'EMP-001', 'name' => 'Nama Baru', 'birth_date' => '1989-04-15', 'employment_status' => 'kontrak']);
+        $this->assertDatabaseHas('employee', ['nik' => 'EMP-002', 'name' => 'Tanggal Kosong', 'birth_date' => null]);
         $this->assertDatabaseHas('employee', ['nik' => 'EMP-003', 'birth_date' => '1993-09-20', 'department' => 'Finance']);
+        $this->assertDatabaseHas('employee', ['nik' => 'EMP-004', 'birth_date' => null, 'employment_status' => 'magang']);
     }
 
     public function test_invalid_import_is_rejected_atomically(): void
