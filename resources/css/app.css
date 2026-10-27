@@ -31,7 +31,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .page-shell { min-height: 100vh; display: flex; flex-direction: column; }
 .topbar { width: min(1180px, calc(100% - 40px)); min-height: 74px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .brand { display: inline-flex; align-items: center; gap: 11px; font-weight: 800; letter-spacing: -.03em; font-size: 1.14rem; }
-.brand-mark { width: 36px; height: 36px; border-radius: 12px 12px 12px 4px; display: grid; place-items: center; color: white; background: var(--primary); box-shadow: 0 8px 20px rgba(23,107,135,.24); }
+.brand-mark { width: 36px; height: 36px; display: block; flex: none; border-radius: 12px 12px 12px 4px; box-shadow: 0 8px 20px rgba(23,107,135,.24); }
 .nav-links { display: flex; align-items: center; gap: 6px; }
 .nav-links > a, .nav-logout { border: 0; background: transparent; color: var(--muted); border-radius: 10px; padding: 9px 12px; cursor: pointer; font-weight: 650; font-size: .9rem; }
 .nav-links > a:hover, .nav-links > a.active, .nav-logout:hover { color: var(--primary); background: #e9f3f6; }

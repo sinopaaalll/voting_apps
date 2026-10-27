@@ -15,6 +15,8 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
+    'description' => env('APP_DESCRIPTION', 'Aplikasi voting internal yang aman, ringkas, dan mudah digunakan.'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment

@@ -11,6 +11,18 @@ class AuthenticationTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_public_layout_contains_deployment_metadata_and_brand_assets(): void
+    {
+        $this->get(route('employee.login'))
+            ->assertOk()
+            ->assertSee('name="description"', false)
+            ->assertSee('name="robots" content="noindex, nofollow, noarchive"', false)
+            ->assertSee('property="og:image"', false)
+            ->assertSee('images/suarakita-share.png', false)
+            ->assertSee('images/suarakita-mark.svg', false)
+            ->assertSee('site.webmanifest', false);
+    }
+
     public function test_protected_pages_redirect_guests_to_the_correct_login(): void
     {
         $this->get('/voting')->assertRedirect(route('employee.login'));
