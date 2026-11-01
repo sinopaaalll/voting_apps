@@ -59,6 +59,15 @@ class AdminDashboardController extends Controller
         return $exporter->downloadCandidate($kandidat);
     }
 
+    public function resetVotes(): RedirectResponse
+    {
+        $deletedVotes = DB::transaction(fn (): int => Voting::query()->delete());
+
+        return redirect()
+            ->route('admin.results')
+            ->with('success', "Reset berhasil. {$deletedVotes} suara telah dikosongkan.");
+    }
+
     public function moveVote(Request $request, Voting $voting): RedirectResponse
     {
         $validated = $request->validate([

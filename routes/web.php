@@ -25,6 +25,7 @@ Route::post('/admin/login', [AdminAuthController::class, 'store'])->name('admin.
 Route::prefix('admin')->name('admin.')->middleware('admin.session')->group(function (): void {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('/hasil', [AdminDashboardController::class, 'results'])->name('results');
+    Route::delete('/hasil/reset', [AdminDashboardController::class, 'resetVotes'])->name('results.reset');
     Route::get('/hasil/export', [AdminDashboardController::class, 'exportResults'])->name('results.export');
     Route::get('/hasil/{kandidat}/export', [AdminDashboardController::class, 'exportCandidateResults'])->whereNumber('kandidat')->name('results.candidate-export');
     Route::patch('/hasil/voting/{voting}/kandidat', [AdminDashboardController::class, 'moveVote'])->whereNumber('voting')->name('results.vote.move');

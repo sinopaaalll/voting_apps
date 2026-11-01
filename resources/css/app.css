@@ -190,8 +190,6 @@ tbody tr:last-child td { border-bottom: 0; }
 .result-rank { width: 48px; height: 48px; flex: none; display: grid; place-items: center; border-radius: 13px; background: #e8f4f7; color: var(--primary); font-weight: 900; }
 .result-content { flex: 1; }.result-content h2 { margin-bottom: 4px; }.result-content > p { color: var(--muted); font-size: .84rem; }
 .result-count { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }.result-count strong { font-size: 1.5rem; }.result-count span { color: var(--muted); font-size: .82rem; }
-.result-bar { height: 8px; overflow: hidden; border-radius: 99px; background: #edf1f4; }.result-bar span { display: block; height: 100%; background: var(--primary); border-radius: inherit; }
-.result-meta { display: flex; justify-content: space-between; margin-top: 7px; color: var(--muted); font-size: .77rem; }
 .result-card-link { color: inherit; cursor: pointer; transition: transform .18s, border-color .18s, box-shadow .18s; }
 .result-card-link:hover { border-color: #99c7d5; transform: translateY(-2px); box-shadow: 0 16px 38px rgba(30,48,80,.11); }
 .result-card-link:focus-visible { outline: 3px solid rgba(23,107,135,.24); outline-offset: 3px; }

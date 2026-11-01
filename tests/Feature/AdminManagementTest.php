@@ -174,6 +174,12 @@ class AdminManagementTest extends TestCase
             ->assertOk()
             ->assertSee('1 dari 1 suara masuk')
             ->assertSee('Kandidat')
+            ->assertSee('Reset seluruh suara')
+            ->assertSee('action="'.route('admin.results.reset').'"', false)
+            ->assertSee('data-confirm-title="Reset seluruh suara?"', false)
+            ->assertSee('<strong>1</strong><span>suara</span>', false)
+            ->assertDontSee('Persentase perolehan')
+            ->assertDontSee('style="width:', false)
             ->assertDontSee('SECRET-001')
             ->assertDontSee('Nama Rahasia');
 
@@ -182,6 +188,29 @@ class AdminManagementTest extends TestCase
             ->assertSee('SECRET-001')
             ->assertSee('Nama Rahasia')
             ->assertSee('Developer');
+    }
+
+    public function test_admin_can_reset_all_votes_without_deleting_employees_or_candidates(): void
+    {
+        $firstEmployee = Employee::create(['nik' => 'RESET-001', 'name' => 'Employee Reset Satu', 'department' => 'IT', 'employment_status' => 'tetap', 'position' => 'Developer']);
+        $secondEmployee = Employee::create(['nik' => 'RESET-002', 'name' => 'Employee Reset Dua', 'department' => 'IT', 'employment_status' => 'tetap', 'position' => 'Developer']);
+        $candidate = Kandidat::create(['nomor_urut' => 1, 'name' => 'Kandidat Reset', 'photo' => 'kandidat/reset.jpg']);
+        Voting::create(['employee_id' => $firstEmployee->id, 'kandidat_id' => $candidate->id]);
+        Voting::create(['employee_id' => $secondEmployee->id, 'kandidat_id' => $candidate->id]);
+
+        $this->delete(route('admin.results.reset'))
+            ->assertRedirect(route('admin.login'));
+        $this->assertDatabaseCount('voting', 2);
+
+        $this->withSession(['admin_authenticated' => true])
+            ->delete(route('admin.results.reset'))
+            ->assertRedirect(route('admin.results'))
+            ->assertSessionHas('success', 'Reset berhasil. 2 suara telah dikosongkan.');
+
+        $this->assertDatabaseCount('voting', 0);
+        $this->assertDatabaseHas('employee', ['id' => $firstEmployee->id]);
+        $this->assertDatabaseHas('employee', ['id' => $secondEmployee->id]);
+        $this->assertDatabaseHas('kandidat', ['id' => $candidate->id]);
     }
 
     public function test_candidate_result_detail_uses_table_and_can_search_by_nik_or_name(): void
